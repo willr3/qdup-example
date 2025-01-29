@@ -1,0 +1,53 @@
+scripts:
+  build-app:
+  - sh: cd /tmp
+  - sh: if [ -d cloned-example ]; then rm -rf cloned-example; fi 
+  - sh: git clone --quiet https://github.com/willr3/qdup-example.git cloned-example
+  - sh: cd cloned-example
+  - sh: quarkus build
+    then:
+    - regex: BUILD SUCCESS
+      else:
+      - abort: failed to build app
+
+  run-app:
+  - sh: cd /tmp/cloned-example
+  - sh: java -jar target/quarkus-app/quarkus-run.jar
+    watch:
+    - regex: "started in (?<RUN.startTime>\\d+\\.\\d{3})s"
+    - regex: "Listening on: (?<RUN.url>[^$]+)"
+      then:
+      - signal: STARTED
+    on-signal:
+      DONE:
+      - ctrlC
+      
+
+  test-app:
+  - wait-for: STARTED
+  - sh: echo "TODO test the app"
+  - sh: time curl ${{url}}/hello
+    then:
+    - regex: "real\\s+(?<RUN.real>\\S+)"
+    - regex: "user\\s+(?<RUN.user>\\S+)"
+    - regex: "sys\\s+(?<RUN.sys>\\S+)"
+  - sh: echo "finishd testing the app"
+  - signal: DONE
+
+  remove:
+  - sh: echo "TODO cleaup the app"
+hosts:
+  target: ${{targetHost}} 
+
+roles:
+  test:
+    hosts:
+    - target
+    setup-scripts:
+    - build-app
+    run-scripts:
+    - run-app
+    - test-app
+    cleanup-scripts:
+    - remove
+
