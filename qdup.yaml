@@ -1,5 +1,6 @@
 scripts:
   build-app:
+  - sh: sdk use java 21-tem
   - sh: cd /tmp
   - sh: if [ -d cloned-example ]; then rm -rf cloned-example; fi 
   - sh: git clone --quiet https://github.com/willr3/qdup-example.git cloned-example
